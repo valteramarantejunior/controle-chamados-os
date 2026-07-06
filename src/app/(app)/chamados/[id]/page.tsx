@@ -33,7 +33,8 @@ export default async function ChamadoDetalhePage({
 
   if (!chamado) notFound();
 
-  const podeEditar = user.role === "ADMIN" || user.role === "ATENDENTE";
+  const podeEditar =
+    user.role === "ADMIN" || user.role === "ATENDENTE" || user.role === "TECNICO";
   const atendentes = podeEditar
     ? await prisma.user.findMany({
         where: { papel: { in: ["ADMIN", "ATENDENTE"] }, ativo: true },

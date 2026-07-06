@@ -46,9 +46,12 @@ export const PAPEL_LABEL: Record<string, string> = {
   TECNICO: "Técnico",
 };
 
+export const TIMEZONE = "America/Sao_Paulo";
+
 export function formatDate(date: Date | string | null | undefined) {
   if (!date) return "—";
   return new Date(date).toLocaleDateString("pt-BR", {
+    timeZone: TIMEZONE,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -63,4 +66,34 @@ export function formatCurrency(value: number | string | null | undefined) {
     style: "currency",
     currency: "BRL",
   }).format(Number(value));
+}
+
+/**
+ * Converte o valor de um <input type="datetime-local"> (ex: "2026-07-10T14:00"),
+ * tratado como horário de São Paulo, para o instante UTC correto — independente
+ * do fuso horário configurado no servidor onde a aplicação roda.
+ */
+export function parseSaoPauloDateTimeInput(value: string): Date {
+  return new Date(`${value}:00-03:00`);
+}
+
+/**
+ * Converte uma data/hora (armazenada em UTC) para o valor de string esperado
+ * por um <input type="datetime-local">, exibindo o horário de São Paulo.
+ */
+export function toSaoPauloDateTimeInputValue(
+  date: Date | string | null | undefined
+): string {
+  if (!date) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(date));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value;
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }

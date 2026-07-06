@@ -4,10 +4,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser, requireRole } from "@/lib/session";
+import { parseSaoPauloDateTimeInput } from "@/lib/labels";
 import type { StatusOS } from "@/generated/prisma/client";
 
 export async function criarOrdemServico(formData: FormData) {
-  await requireRole("ADMIN", "ATENDENTE");
+  await requireRole("ADMIN", "ATENDENTE", "TECNICO");
 
   const clienteId = String(formData.get("clienteId") ?? "");
   const descricao = String(formData.get("descricao") ?? "").trim();
@@ -24,7 +25,7 @@ export async function criarOrdemServico(formData: FormData) {
       descricao,
       chamadoId: chamadoId || null,
       tecnicoId: (formData.get("tecnicoId") as string) || null,
-      dataAgendada: dataAgendada ? new Date(dataAgendada) : null,
+      dataAgendada: dataAgendada ? parseSaoPauloDateTimeInput(dataAgendada) : null,
       observacoes: String(formData.get("observacoes") ?? "").trim() || null,
     },
   });
@@ -34,47 +35,27 @@ export async function criarOrdemServico(formData: FormData) {
 }
 
 export async function atualizarOrdemServico(id: string, formData: FormData) {
-  const user = await requireUser();
+  await requireUser();
 
   const os = await prisma.ordemServico.findUnique({ where: { id } });
   if (!os) throw new Error("Ordem de serviço não encontrada");
 
-  const podeEditarTudo = user.role === "ADMIN" || user.role === "ATENDENTE";
-  const ehTecnicoResponsavel =
-    user.role === "TECNICO" && os.tecnicoId === user.id;
-
-  if (!podeEditarTudo && !ehTecnicoResponsavel) {
-    throw new Error("Sem permissão para editar esta ordem de serviço");
-  }
-
   const status = formData.get("status") as StatusOS;
   const observacoes = String(formData.get("observacoes") ?? "").trim() || null;
   const isConcluindo = status === "CONCLUIDA";
+  const dataAgendada = formData.get("dataAgendada") as string;
 
-  if (podeEditarTudo) {
-    const dataAgendada = formData.get("dataAgendada") as string;
-
-    await prisma.ordemServico.update({
-      where: { id },
-      data: {
-        descricao: String(formData.get("descricao") ?? "").trim(),
-        tecnicoId: (formData.get("tecnicoId") as string) || null,
-        status,
-        dataAgendada: dataAgendada ? new Date(dataAgendada) : null,
-        dataConclusao: isConcluindo ? new Date() : null,
-        observacoes,
-      },
-    });
-  } else {
-    await prisma.ordemServico.update({
-      where: { id },
-      data: {
-        status,
-        dataConclusao: isConcluindo ? new Date() : null,
-        observacoes,
-      },
-    });
-  }
+  await prisma.ordemServico.update({
+    where: { id },
+    data: {
+      descricao: String(formData.get("descricao") ?? "").trim(),
+      tecnicoId: (formData.get("tecnicoId") as string) || null,
+      status,
+      dataAgendada: dataAgendada ? parseSaoPauloDateTimeInput(dataAgendada) : null,
+      dataConclusao: isConcluindo ? new Date() : null,
+      observacoes,
+    },
+  });
 
   revalidatePath("/ordens-servico");
   revalidatePath(`/ordens-servico/${id}`);
@@ -98,7 +79,7 @@ async function recalcularValorOS(ordemServicoId: string) {
 }
 
 export async function adicionarItemOS(ordemServicoId: string, formData: FormData) {
-  await requireRole("ADMIN", "ATENDENTE");
+  await requireRole("ADMIN", "ATENDENTE", "TECNICO");
 
   const descricao = String(formData.get("descricao") ?? "").trim();
   const quantidade = Number(formData.get("quantidade") ?? 1);
@@ -117,7 +98,7 @@ export async function adicionarItemOS(ordemServicoId: string, formData: FormData
 }
 
 export async function removerItemOS(ordemServicoId: string, itemId: string) {
-  await requireRole("ADMIN", "ATENDENTE");
+  await requireRole("ADMIN", "ATENDENTE", "TECNICO");
   await prisma.itemOrdemServico.delete({ where: { id: itemId } });
   await recalcularValorOS(ordemServicoId);
 
@@ -132,14 +113,6 @@ async function requireAcessoOS(ordemServicoId: string) {
     where: { id: ordemServicoId },
   });
   if (!os) throw new Error("Ordem de serviço não encontrada");
-
-  const podeEditarTudo = user.role === "ADMIN" || user.role === "ATENDENTE";
-  const ehTecnicoResponsavel =
-    user.role === "TECNICO" && os.tecnicoId === user.id;
-
-  if (!podeEditarTudo && !ehTecnicoResponsavel) {
-    throw new Error("Sem permissão para editar esta ordem de serviço");
-  }
 
   return { user, os };
 }

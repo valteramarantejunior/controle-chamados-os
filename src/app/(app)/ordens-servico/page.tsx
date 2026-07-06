@@ -15,13 +15,12 @@ export default async function OrdensServicoPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const user = await requireUser();
+  await requireUser();
   const { status } = await searchParams;
 
   const ordens = await prisma.ordemServico.findMany({
     where: {
       status: (status as StatusOS) || undefined,
-      tecnicoId: user.role === "TECNICO" ? user.id : undefined,
     },
     orderBy: { createdAt: "desc" },
     include: { cliente: true, tecnico: true },
@@ -33,11 +32,9 @@ export default async function OrdensServicoPage({
         <h1 className="text-2xl font-semibold text-slate-900">
           Ordens de Serviço
         </h1>
-        {user.role !== "TECNICO" && (
-          <Link href="/ordens-servico/novo" className={btnPrimary}>
-            Nova Ordem de Serviço
-          </Link>
-        )}
+        <Link href="/ordens-servico/novo" className={btnPrimary}>
+          Nova Ordem de Serviço
+        </Link>
       </div>
 
       <form className="flex gap-3 mb-4">

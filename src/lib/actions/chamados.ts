@@ -32,7 +32,7 @@ export async function criarChamado(formData: FormData) {
 }
 
 export async function atualizarChamado(id: string, formData: FormData) {
-  await requireRole("ADMIN", "ATENDENTE");
+  await requireRole("ADMIN", "ATENDENTE", "TECNICO");
 
   const status = formData.get("status") as StatusChamado;
   const isFechando = status === "RESOLVIDO" || status === "FECHADO";

@@ -9,7 +9,7 @@ export default async function NovaOrdemServicoPage({
 }: {
   searchParams: Promise<{ clienteId?: string; chamadoId?: string }>;
 }) {
-  await requireRole("ADMIN", "ATENDENTE");
+  await requireRole("ADMIN", "ATENDENTE", "TECNICO");
   const { clienteId, chamadoId } = await searchParams;
 
   const [clientes, tecnicos] = await Promise.all([

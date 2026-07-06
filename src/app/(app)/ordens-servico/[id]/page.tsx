@@ -12,17 +12,16 @@ import {
   salvarAssinaturaCliente,
 } from "@/lib/actions/ordens-servico";
 import { input, label, btnPrimary, btnSecondary, card, badge } from "@/lib/ui";
-import { STATUS_OS_LABEL, STATUS_OS_COLOR, formatDate, formatCurrency } from "@/lib/labels";
+import {
+  STATUS_OS_LABEL,
+  STATUS_OS_COLOR,
+  formatDate,
+  formatCurrency,
+  toSaoPauloDateTimeInputValue,
+} from "@/lib/labels";
 import { formatPhoneForWhatsApp, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { EnviarOsWhatsAppButton } from "@/components/EnviarOsWhatsAppButton";
 import { SignaturePad } from "@/components/SignaturePad";
-
-function toDatetimeLocal(date: Date | null) {
-  if (!date) return "";
-  const d = new Date(date);
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
-}
 
 export default async function OrdemServicoDetalhePage({
   params,
@@ -48,9 +47,9 @@ export default async function OrdemServicoDetalhePage({
 
   if (!os) notFound();
 
-  const podeEditarTudo = user.role === "ADMIN" || user.role === "ATENDENTE";
-  const podeEditar =
-    podeEditarTudo || (user.role === "TECNICO" && os.tecnicoId === user.id);
+  const podeEditarTudo =
+    user.role === "ADMIN" || user.role === "ATENDENTE" || user.role === "TECNICO";
+  const podeEditar = podeEditarTudo;
 
   const tecnicos = podeEditarTudo
     ? await prisma.user.findMany({
@@ -199,7 +198,7 @@ export default async function OrdemServicoDetalhePage({
                     id="dataAgendada"
                     name="dataAgendada"
                     type="datetime-local"
-                    defaultValue={toDatetimeLocal(os.dataAgendada)}
+                    defaultValue={toSaoPauloDateTimeInputValue(os.dataAgendada)}
                     className={input}
                   />
                 </div>
