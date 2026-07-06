@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -12,7 +13,13 @@ export async function GET(
 
   const os = await prisma.ordemServico.findUnique({
     where: { id },
-    include: { cliente: true, tecnico: true, chamado: true, itens: true },
+    include: {
+      cliente: true,
+      tecnico: true,
+      chamado: true,
+      itens: true,
+      fotos: { orderBy: { createdAt: "asc" } },
+    },
   });
 
   if (!os) {
@@ -28,7 +35,17 @@ export async function GET(
     return new Response("Sem permissão", { status: 403 });
   }
 
-  const buffer = await renderToBuffer(<OrdemServicoPdf os={os} />);
+  const fotos = await Promise.all(
+    os.fotos.map((foto) =>
+      sharp(foto.dados)
+        .rotate()
+        .resize({ width: 500, withoutEnlargement: true })
+        .jpeg({ quality: 70 })
+        .toBuffer()
+    )
+  );
+
+  const buffer = await renderToBuffer(<OrdemServicoPdf os={os} fotos={fotos} />);
 
   return new Response(new Uint8Array(buffer), {
     headers: {

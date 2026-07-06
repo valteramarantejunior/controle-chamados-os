@@ -75,32 +75,21 @@ export default async function NovaOrdemServicoPage({
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="dataAgendada" className={label}>
-              Data agendada
-            </label>
-            <input
-              id="dataAgendada"
-              name="dataAgendada"
-              type="datetime-local"
-              className={input}
-            />
-          </div>
-          <div>
-            <label htmlFor="valor" className={label}>
-              Valor (R$)
-            </label>
-            <input
-              id="valor"
-              name="valor"
-              type="number"
-              step="0.01"
-              min="0"
-              className={input}
-            />
-          </div>
+        <div>
+          <label htmlFor="dataAgendada" className={label}>
+            Data agendada
+          </label>
+          <input
+            id="dataAgendada"
+            name="dataAgendada"
+            type="datetime-local"
+            className={input}
+          />
         </div>
+        <p className="text-xs text-slate-400">
+          O valor total é calculado automaticamente pelos itens/peças
+          adicionados depois de criar a ordem de serviço.
+        </p>
         <div>
           <label htmlFor="observacoes" className={label}>
             Observações

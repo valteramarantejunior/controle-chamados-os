@@ -78,7 +78,7 @@ export default async function OrdemServicoDetalhePage({
     `Status: ${STATUS_OS_LABEL[os.status]}`,
     `Técnico: ${os.tecnico?.nome ?? "A definir"}`,
     `Data agendada: ${formatDate(os.dataAgendada)}`,
-    `Valor: ${formatCurrency(os.valor as unknown as string)}`,
+    `Valor total: ${formatCurrency(totalItens)}`,
     "",
     "O PDF completo da OS foi baixado agora nesta aba — é só anexar aqui e enviar.",
     "",
@@ -191,33 +191,17 @@ export default async function OrdemServicoDetalhePage({
                 </select>
               </div>
               {podeEditarTudo && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="dataAgendada" className={label}>
-                      Data agendada
-                    </label>
-                    <input
-                      id="dataAgendada"
-                      name="dataAgendada"
-                      type="datetime-local"
-                      defaultValue={toDatetimeLocal(os.dataAgendada)}
-                      className={input}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="valor" className={label}>
-                      Valor (R$)
-                    </label>
-                    <input
-                      id="valor"
-                      name="valor"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={os.valor ? String(os.valor) : ""}
-                      className={input}
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="dataAgendada" className={label}>
+                    Data agendada
+                  </label>
+                  <input
+                    id="dataAgendada"
+                    name="dataAgendada"
+                    type="datetime-local"
+                    defaultValue={toDatetimeLocal(os.dataAgendada)}
+                    className={input}
+                  />
                 </div>
               )}
               <div>
@@ -239,7 +223,7 @@ export default async function OrdemServicoDetalhePage({
           ) : (
             <div className={`${card} p-6 space-y-2 text-sm text-slate-600`}>
               <p>Data agendada: {formatDate(os.dataAgendada)}</p>
-              <p>Valor: {formatCurrency(os.valor as unknown as string)}</p>
+              <p>Valor total: {formatCurrency(totalItens)}</p>
               <p>Observações: {os.observacoes ?? "—"}</p>
             </div>
           )}
@@ -251,8 +235,8 @@ export default async function OrdemServicoDetalhePage({
               <h2 className="font-medium text-slate-900">
                 Itens / Peças utilizadas
               </h2>
-              <span className="text-sm text-slate-500">
-                Total: {formatCurrency(totalItens)}
+              <span className="text-sm font-medium text-slate-700">
+                Valor total: {formatCurrency(totalItens)}
               </span>
             </div>
             <ul className="divide-y divide-slate-100">

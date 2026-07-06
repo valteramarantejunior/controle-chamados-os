@@ -16,7 +16,6 @@ export async function criarOrdemServico(formData: FormData) {
   }
 
   const dataAgendada = formData.get("dataAgendada") as string;
-  const valor = formData.get("valor") as string;
   const chamadoId = formData.get("chamadoId") as string;
 
   const os = await prisma.ordemServico.create({
@@ -26,7 +25,6 @@ export async function criarOrdemServico(formData: FormData) {
       chamadoId: chamadoId || null,
       tecnicoId: (formData.get("tecnicoId") as string) || null,
       dataAgendada: dataAgendada ? new Date(dataAgendada) : null,
-      valor: valor ? valor : null,
       observacoes: String(formData.get("observacoes") ?? "").trim() || null,
     },
   });
@@ -55,7 +53,6 @@ export async function atualizarOrdemServico(id: string, formData: FormData) {
 
   if (podeEditarTudo) {
     const dataAgendada = formData.get("dataAgendada") as string;
-    const valor = formData.get("valor") as string;
 
     await prisma.ordemServico.update({
       where: { id },
@@ -65,7 +62,6 @@ export async function atualizarOrdemServico(id: string, formData: FormData) {
         status,
         dataAgendada: dataAgendada ? new Date(dataAgendada) : null,
         dataConclusao: isConcluindo ? new Date() : null,
-        valor: valor ? valor : null,
         observacoes,
       },
     });
@@ -84,6 +80,23 @@ export async function atualizarOrdemServico(id: string, formData: FormData) {
   revalidatePath(`/ordens-servico/${id}`);
 }
 
+async function recalcularValorOS(ordemServicoId: string) {
+  const itens = await prisma.itemOrdemServico.findMany({
+    where: { ordemServicoId },
+    select: { quantidade: true, valorUnitario: true },
+  });
+
+  const total = itens.reduce(
+    (soma, item) => soma + Number(item.valorUnitario) * item.quantidade,
+    0
+  );
+
+  await prisma.ordemServico.update({
+    where: { id: ordemServicoId },
+    data: { valor: total },
+  });
+}
+
 export async function adicionarItemOS(ordemServicoId: string, formData: FormData) {
   await requireRole("ADMIN", "ATENDENTE");
 
@@ -96,14 +109,21 @@ export async function adicionarItemOS(ordemServicoId: string, formData: FormData
   await prisma.itemOrdemServico.create({
     data: { ordemServicoId, descricao, quantidade, valorUnitario },
   });
+  await recalcularValorOS(ordemServicoId);
 
   revalidatePath(`/ordens-servico/${ordemServicoId}`);
+  revalidatePath("/ordens-servico");
+  revalidatePath("/relatorios");
 }
 
 export async function removerItemOS(ordemServicoId: string, itemId: string) {
   await requireRole("ADMIN", "ATENDENTE");
   await prisma.itemOrdemServico.delete({ where: { id: itemId } });
+  await recalcularValorOS(ordemServicoId);
+
   revalidatePath(`/ordens-servico/${ordemServicoId}`);
+  revalidatePath("/ordens-servico");
+  revalidatePath("/relatorios");
 }
 
 async function requireAcessoOS(ordemServicoId: string) {

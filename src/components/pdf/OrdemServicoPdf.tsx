@@ -68,6 +68,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
     borderRadius: 4,
   },
+  fotosGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 6,
+  },
+  fotoItem: {
+    width: 120,
+    height: 120,
+    objectFit: "cover",
+    borderRadius: 4,
+    marginRight: 8,
+    marginBottom: 8,
+  },
   assinaturas: {
     flexDirection: "row",
     marginTop: 24,
@@ -111,7 +124,13 @@ type OrdemServicoCompleta = OrdemServico & {
 
 const logoBuffer = fs.readFileSync(path.join(process.cwd(), "public", "logo.png"));
 
-export function OrdemServicoPdf({ os }: { os: OrdemServicoCompleta }) {
+export function OrdemServicoPdf({
+  os,
+  fotos = [],
+}: {
+  os: OrdemServicoCompleta;
+  fotos?: Buffer[];
+}) {
   const totalItens = os.itens.reduce(
     (soma, item) => soma + Number(item.valorUnitario) * item.quantidade,
     0
@@ -205,12 +224,7 @@ export function OrdemServicoPdf({ os }: { os: OrdemServicoCompleta }) {
 
         <View style={styles.totalRow}>
           <Text style={{ fontWeight: 700 }}>
-            Valor total:{" "}
-            {formatCurrency(
-              os.valor
-                ? (os.valor as unknown as string)
-                : totalItens
-            )}
+            Valor total: {formatCurrency(totalItens)}
           </Text>
         </View>
 
@@ -219,6 +233,17 @@ export function OrdemServicoPdf({ os }: { os: OrdemServicoCompleta }) {
             <Text style={styles.sectionTitle}>Observações</Text>
             <View style={styles.observacoes}>
               <Text>{os.observacoes}</Text>
+            </View>
+          </View>
+        )}
+
+        {fotos.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Fotos do serviço</Text>
+            <View style={styles.fotosGrid}>
+              {fotos.map((foto, i) => (
+                <Image key={i} style={styles.fotoItem} src={foto} />
+              ))}
             </View>
           </View>
         )}
