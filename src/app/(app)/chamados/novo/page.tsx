@@ -10,7 +10,7 @@ export default async function NovoChamadoPage({
 }: {
   searchParams: Promise<{ clienteId?: string }>;
 }) {
-  await requireRole("ADMIN", "ATENDENTE");
+  await requireRole("ADMIN", "ATENDENTE", "TECNICO");
   const { clienteId } = await searchParams;
 
   const [clientes, atendentes] = await Promise.all([
@@ -95,7 +95,8 @@ export default async function NovoChamadoPage({
           <label htmlFor="atendenteId" className={label}>
             Atendente responsável
           </label>
-          <select id="atendenteId" name="atendenteId" className={input}>
+          <select id="atendenteId" name="atendenteId" className={input} defaultValue="">
+            <option value="">Não definido</option>
             {atendentes.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.nome}

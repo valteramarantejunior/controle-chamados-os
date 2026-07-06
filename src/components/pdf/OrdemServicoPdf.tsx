@@ -68,6 +68,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
     borderRadius: 4,
   },
+  assinaturas: {
+    flexDirection: "row",
+    marginTop: 24,
+  },
+  assinaturaBox: {
+    flex: 1,
+    alignItems: "center",
+    marginRight: 16,
+  },
+  assinaturaImg: {
+    width: "100%",
+    height: 70,
+    objectFit: "contain",
+  },
+  assinaturaLinha: {
+    width: "100%",
+    borderTop: "1 solid #94a3b8",
+    marginTop: 4,
+    paddingTop: 4,
+    textAlign: "center",
+    fontSize: 9,
+    color: "#64748b",
+  },
   footer: {
     position: "absolute",
     bottom: 24,
@@ -199,6 +222,21 @@ export function OrdemServicoPdf({ os }: { os: OrdemServicoCompleta }) {
             </View>
           </View>
         )}
+
+        <View style={styles.assinaturas}>
+          <View style={styles.assinaturaBox}>
+            {os.assinaturaTecnico && (
+              <Image style={styles.assinaturaImg} src={os.assinaturaTecnico} />
+            )}
+            <Text style={styles.assinaturaLinha}>Assinatura do técnico</Text>
+          </View>
+          <View style={styles.assinaturaBox}>
+            {os.assinaturaCliente && (
+              <Image style={styles.assinaturaImg} src={os.assinaturaCliente} />
+            )}
+            <Text style={styles.assinaturaLinha}>Assinatura do cliente</Text>
+          </View>
+        </View>
 
         <Text style={styles.footer} fixed>
           JD Segurança e Tecnologia · Documento gerado automaticamente pelo

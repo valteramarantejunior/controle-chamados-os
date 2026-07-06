@@ -6,11 +6,16 @@ import {
   atualizarOrdemServico,
   adicionarItemOS,
   removerItemOS,
+  adicionarFotosOS,
+  removerFotoOS,
+  salvarAssinaturaTecnico,
+  salvarAssinaturaCliente,
 } from "@/lib/actions/ordens-servico";
 import { input, label, btnPrimary, btnSecondary, card, badge } from "@/lib/ui";
 import { STATUS_OS_LABEL, STATUS_OS_COLOR, formatDate, formatCurrency } from "@/lib/labels";
 import { formatPhoneForWhatsApp, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { EnviarOsWhatsAppButton } from "@/components/EnviarOsWhatsAppButton";
+import { SignaturePad } from "@/components/SignaturePad";
 
 function toDatetimeLocal(date: Date | null) {
   if (!date) return "";
@@ -34,6 +39,10 @@ export default async function OrdemServicoDetalhePage({
       tecnico: true,
       chamado: true,
       itens: { orderBy: { id: "asc" } },
+      fotos: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, createdAt: true },
+      },
     },
   });
 
@@ -57,6 +66,9 @@ export default async function OrdemServicoDetalhePage({
 
   const atualizarComId = atualizarOrdemServico.bind(null, id);
   const adicionarItemComId = adicionarItemOS.bind(null, id);
+  const adicionarFotosComId = adicionarFotosOS.bind(null, id);
+  const salvarAssinaturaTecnicoComId = salvarAssinaturaTecnico.bind(null, id);
+  const salvarAssinaturaClienteComId = salvarAssinaturaCliente.bind(null, id);
 
   const telefoneWhatsApp = formatPhoneForWhatsApp(os.cliente.telefone);
   const mensagemWhatsApp = [
@@ -315,6 +327,100 @@ export default async function OrdemServicoDetalhePage({
           </div>
         </div>
       </div>
+
+      <div className={`${card} mt-6`}>
+        <div className="px-4 py-3 border-b border-slate-200">
+          <h2 className="font-medium text-slate-900">Fotos do serviço</h2>
+        </div>
+        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {os.fotos.map((foto) => (
+            <div key={foto.id} className="relative group">
+              <a
+                href={`/api/ordens-servico/${os.id}/fotos/${foto.id}`}
+                target="_blank"
+              >
+                <img
+                  src={`/api/ordens-servico/${os.id}/fotos/${foto.id}`}
+                  alt="Foto da ordem de serviço"
+                  className="w-full h-28 object-cover rounded-md border border-slate-200"
+                />
+              </a>
+              {podeEditar && (
+                <form
+                  action={removerFotoOS.bind(null, id, foto.id)}
+                  className="absolute top-1 right-1"
+                >
+                  <button
+                    type="submit"
+                    className="rounded-md bg-slate-900/80 text-white text-xs px-2 py-0.5 hover:bg-red-600"
+                  >
+                    Remover
+                  </button>
+                </form>
+              )}
+            </div>
+          ))}
+          {os.fotos.length === 0 && (
+            <p className="col-span-full text-center text-slate-400 text-sm py-4">
+              Nenhuma foto adicionada.
+            </p>
+          )}
+        </div>
+        {podeEditar && (
+          <form
+            action={adicionarFotosComId}
+            className="px-4 py-4 border-t border-slate-200 flex flex-wrap items-center gap-3"
+          >
+            <input
+              type="file"
+              name="fotos"
+              accept="image/*"
+              capture="environment"
+              multiple
+              required
+              className="text-sm"
+            />
+            <button type="submit" className={btnSecondary}>
+              Adicionar fotos
+            </button>
+          </form>
+        )}
+      </div>
+
+      {podeEditar && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div className={`${card} p-4`}>
+            <h2 className="font-medium text-slate-900 mb-3">
+              Assinatura do técnico
+            </h2>
+            {os.assinaturaTecnico ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={os.assinaturaTecnico}
+                alt="Assinatura do técnico"
+                className="w-full h-[180px] object-contain border border-slate-200 rounded-md bg-white"
+              />
+            ) : (
+              <SignaturePad onSave={salvarAssinaturaTecnicoComId} />
+            )}
+          </div>
+          <div className={`${card} p-4`}>
+            <h2 className="font-medium text-slate-900 mb-3">
+              Assinatura do cliente
+            </h2>
+            {os.assinaturaCliente ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={os.assinaturaCliente}
+                alt="Assinatura do cliente"
+                className="w-full h-[180px] object-contain border border-slate-200 rounded-md bg-white"
+              />
+            ) : (
+              <SignaturePad onSave={salvarAssinaturaClienteComId} />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

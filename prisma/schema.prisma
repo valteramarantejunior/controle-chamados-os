@@ -120,6 +120,9 @@ model OrdemServico {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  assinaturaTecnico String? @db.Text
+  assinaturaCliente String? @db.Text
+
   cliente      Cliente  @relation(fields: [clienteId], references: [id])
   clienteId    String
 
@@ -130,6 +133,7 @@ model OrdemServico {
   tecnicoId    String?
 
   itens        ItemOrdemServico[]
+  fotos        FotoOrdemServico[]
 
   @@map("ordens_servico")
 }
@@ -144,4 +148,16 @@ model ItemOrdemServico {
   ordemServicoId String
 
   @@map("itens_ordem_servico")
+}
+
+model FotoOrdemServico {
+  id        String   @id @default(cuid())
+  dados     Bytes
+  mimeType  String
+  createdAt DateTime @default(now())
+
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  ordemServicoId String
+
+  @@map("fotos_ordem_servico")
 }

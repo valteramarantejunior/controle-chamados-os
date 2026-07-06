@@ -7,7 +7,7 @@ import { requireUser, requireRole } from "@/lib/session";
 import type { Prioridade, StatusChamado } from "@/generated/prisma/client";
 
 export async function criarChamado(formData: FormData) {
-  const user = await requireRole("ADMIN", "ATENDENTE");
+  const user = await requireRole("ADMIN", "ATENDENTE", "TECNICO");
 
   const clienteId = String(formData.get("clienteId") ?? "");
   const titulo = String(formData.get("titulo") ?? "").trim();

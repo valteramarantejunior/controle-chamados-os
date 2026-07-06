@@ -105,3 +105,89 @@ export async function removerItemOS(ordemServicoId: string, itemId: string) {
   await prisma.itemOrdemServico.delete({ where: { id: itemId } });
   revalidatePath(`/ordens-servico/${ordemServicoId}`);
 }
+
+async function requireAcessoOS(ordemServicoId: string) {
+  const user = await requireUser();
+  const os = await prisma.ordemServico.findUnique({
+    where: { id: ordemServicoId },
+  });
+  if (!os) throw new Error("Ordem de serviço não encontrada");
+
+  const podeEditarTudo = user.role === "ADMIN" || user.role === "ATENDENTE";
+  const ehTecnicoResponsavel =
+    user.role === "TECNICO" && os.tecnicoId === user.id;
+
+  if (!podeEditarTudo && !ehTecnicoResponsavel) {
+    throw new Error("Sem permissão para editar esta ordem de serviço");
+  }
+
+  return { user, os };
+}
+
+const MAX_FOTO_BYTES = 8 * 1024 * 1024;
+
+export async function adicionarFotosOS(ordemServicoId: string, formData: FormData) {
+  await requireAcessoOS(ordemServicoId);
+
+  const arquivos = formData
+    .getAll("fotos")
+    .filter((v): v is File => v instanceof File && v.size > 0);
+
+  for (const arquivo of arquivos) {
+    if (!arquivo.type.startsWith("image/")) continue;
+    if (arquivo.size > MAX_FOTO_BYTES) continue;
+
+    const buffer = Buffer.from(await arquivo.arrayBuffer());
+    await prisma.fotoOrdemServico.create({
+      data: {
+        ordemServicoId,
+        dados: buffer,
+        mimeType: arquivo.type,
+      },
+    });
+  }
+
+  revalidatePath(`/ordens-servico/${ordemServicoId}`);
+}
+
+export async function removerFotoOS(ordemServicoId: string, fotoId: string) {
+  await requireAcessoOS(ordemServicoId);
+  await prisma.fotoOrdemServico.delete({ where: { id: fotoId } });
+  revalidatePath(`/ordens-servico/${ordemServicoId}`);
+}
+
+function validarAssinaturaDataUrl(dataUrl: string) {
+  if (!/^data:image\/png;base64,/.test(dataUrl)) {
+    throw new Error("Assinatura inválida");
+  }
+}
+
+export async function salvarAssinaturaTecnico(
+  ordemServicoId: string,
+  assinatura: string
+) {
+  await requireAcessoOS(ordemServicoId);
+  validarAssinaturaDataUrl(assinatura);
+
+  await prisma.ordemServico.update({
+    where: { id: ordemServicoId },
+    data: { assinaturaTecnico: assinatura },
+  });
+
+  revalidatePath(`/ordens-servico/${ordemServicoId}`);
+}
+
+export async function salvarAssinaturaCliente(
+  ordemServicoId: string,
+  assinatura: string
+) {
+  await requireAcessoOS(ordemServicoId);
+  validarAssinaturaDataUrl(assinatura);
+
+  await prisma.ordemServico.update({
+    where: { id: ordemServicoId },
+    data: { assinaturaCliente: assinatura },
+  });
+
+  revalidatePath(`/ordens-servico/${ordemServicoId}`);
+}

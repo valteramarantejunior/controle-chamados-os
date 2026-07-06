@@ -16,7 +16,7 @@ export default async function ChamadosPage({
 }: {
   searchParams: Promise<{ status?: string; prioridade?: string }>;
 }) {
-  const user = await requireUser();
+  await requireUser();
   const { status, prioridade } = await searchParams;
 
   const chamados = await prisma.chamado.findMany({
@@ -32,11 +32,9 @@ export default async function ChamadosPage({
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-slate-900">Chamados</h1>
-        {user.role !== "TECNICO" && (
-          <Link href="/chamados/novo" className={btnPrimary}>
-            Novo Chamado
-          </Link>
-        )}
+        <Link href="/chamados/novo" className={btnPrimary}>
+          Novo Chamado
+        </Link>
       </div>
 
       <form className="flex gap-3 mb-4">

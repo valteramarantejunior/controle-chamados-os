@@ -1,5 +1,5 @@
 export const input =
-  "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900";
+  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900";
 export const label = "block text-sm font-medium text-slate-700 mb-1";
 export const btnPrimary =
   "inline-flex items-center justify-center rounded-md bg-slate-900 text-white text-sm font-medium px-4 py-2 hover:bg-slate-800 transition-colors disabled:opacity-50";
