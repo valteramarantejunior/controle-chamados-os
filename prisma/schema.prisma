@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Papel {
+  ADMIN
+  ATENDENTE
+  TECNICO
+}
+
+enum StatusChamado {
+  ABERTO
+  EM_ANDAMENTO
+  AGUARDANDO_CLIENTE
+  RESOLVIDO
+  FECHADO
+}
+
+enum Prioridade {
+  BAIXA
+  MEDIA
+  ALTA
+}
+
+enum StatusOS {
+  ABERTA
+  EM_EXECUCAO
+  CONCLUIDA
+  CANCELADA
+}
+
+model User {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  papel     Papel    @default(ATENDENTE)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chamadosAtendidos  Chamado[]          @relation("AtendenteChamados")
+  interacoes         InteracaoChamado[]
+  ordensServico      OrdemServico[]     @relation("TecnicoOrdens")
+
+  @@map("users")
+}
+
+model Cliente {
+  id           String   @id @default(cuid())
+  nome         String
+  telefone     String?
+  email        String?
+  endereco     String?
+  observacoes  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  chamados      Chamado[]
+  ordensServico OrdemServico[]
+
+  @@map("clientes")
+}
+
+model Chamado {
+  id          String         @id @default(cuid())
+  numero      Int            @unique @default(autoincrement())
+  titulo      String
+  descricao   String
+  categoria   String?
+  prioridade  Prioridade     @default(MEDIA)
+  status      StatusChamado  @default(ABERTO)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  fechadoEm   DateTime?
+
+  cliente       Cliente  @relation(fields: [clienteId], references: [id])
+  clienteId     String
+
+  atendente     User?    @relation("AtendenteChamados", fields: [atendenteId], references: [id])
+  atendenteId   String?
+
+  interacoes    InteracaoChamado[]
+  ordensServico OrdemServico[]
+
+  @@map("chamados")
+}
+
+model InteracaoChamado {
+  id        String   @id @default(cuid())
+  mensagem  String
+  createdAt DateTime @default(now())
+
+  chamado   Chamado @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
+  chamadoId String
+
+  autor     User   @relation(fields: [autorId], references: [id])
+  autorId   String
+
+  @@map("interacoes_chamado")
+}
+
+model OrdemServico {
+  id           String    @id @default(cuid())
+  numero       Int       @unique @default(autoincrement())
+  descricao    String
+  status       StatusOS  @default(ABERTA)
+  dataAgendada DateTime?
+  dataConclusao DateTime?
+  valor        Decimal?  @db.Decimal(10, 2)
+  observacoes  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  cliente      Cliente  @relation(fields: [clienteId], references: [id])
+  clienteId    String
+
+  chamado      Chamado? @relation(fields: [chamadoId], references: [id])
+  chamadoId    String?
+
+  tecnico      User?    @relation("TecnicoOrdens", fields: [tecnicoId], references: [id])
+  tecnicoId    String?
+
+  itens        ItemOrdemServico[]
+
+  @@map("ordens_servico")
+}
+
+model ItemOrdemServico {
+  id             String  @id @default(cuid())
+  descricao      String
+  quantidade     Int     @default(1)
+  valorUnitario  Decimal @db.Decimal(10, 2)
+
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  ordemServicoId String
+
+  @@map("itens_ordem_servico")
+}
