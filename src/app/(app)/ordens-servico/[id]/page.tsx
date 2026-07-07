@@ -22,6 +22,7 @@ import {
 import { formatPhoneForWhatsApp, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { EnviarOsWhatsAppButton } from "@/components/EnviarOsWhatsAppButton";
 import { SignaturePad } from "@/components/SignaturePad";
+import { FotoUploadButtons } from "@/components/FotoUploadButtons";
 
 export default async function OrdemServicoDetalhePage({
   params,
@@ -79,7 +80,7 @@ export default async function OrdemServicoDetalhePage({
     `Data agendada: ${formatDate(os.dataAgendada)}`,
     `Valor total: ${formatCurrency(totalItens)}`,
     "",
-    "O PDF completo da OS foi baixado agora nesta aba — é só anexar aqui e enviar.",
+    "Segue em anexo o PDF completo da ordem de serviço.",
     "",
     "JD Segurança e Tecnologia",
   ].join("\n");
@@ -125,6 +126,7 @@ export default async function OrdemServicoDetalhePage({
               whatsappUrl={whatsappUrl}
               pdfUrl={`/api/ordens-servico/${os.id}/pdf`}
               pdfFileName={`OS-${os.numero}.pdf`}
+              mensagem={mensagemWhatsApp}
             />
           )}
         </div>
@@ -350,23 +352,9 @@ export default async function OrdemServicoDetalhePage({
           )}
         </div>
         {podeEditar && (
-          <form
-            action={adicionarFotosComId}
-            className="px-4 py-4 border-t border-slate-200 flex flex-wrap items-center gap-3"
-          >
-            <input
-              type="file"
-              name="fotos"
-              accept="image/*"
-              capture="environment"
-              multiple
-              required
-              className="text-sm"
-            />
-            <button type="submit" className={btnSecondary}>
-              Adicionar fotos
-            </button>
-          </form>
+          <div className="px-4 py-4 border-t border-slate-200">
+            <FotoUploadButtons onUpload={adicionarFotosComId} />
+          </div>
         )}
       </div>
 
