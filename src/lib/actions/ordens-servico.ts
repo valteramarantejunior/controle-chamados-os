@@ -117,7 +117,7 @@ async function requireAcessoOS(ordemServicoId: string) {
   return { user, os };
 }
 
-const MAX_FOTO_BYTES = 8 * 1024 * 1024;
+const MAX_FOTO_BYTES = 15 * 1024 * 1024;
 
 export async function adicionarFotosOS(ordemServicoId: string, formData: FormData) {
   await requireAcessoOS(ordemServicoId);
@@ -126,9 +126,17 @@ export async function adicionarFotosOS(ordemServicoId: string, formData: FormDat
     .getAll("fotos")
     .filter((v): v is File => v instanceof File && v.size > 0);
 
+  const rejeitados: string[] = [];
+
   for (const arquivo of arquivos) {
-    if (!arquivo.type.startsWith("image/")) continue;
-    if (arquivo.size > MAX_FOTO_BYTES) continue;
+    if (!arquivo.type.startsWith("image/")) {
+      rejeitados.push(`${arquivo.name} (formato não suportado)`);
+      continue;
+    }
+    if (arquivo.size > MAX_FOTO_BYTES) {
+      rejeitados.push(`${arquivo.name} (maior que 15MB)`);
+      continue;
+    }
 
     const buffer = Buffer.from(await arquivo.arrayBuffer());
     await prisma.fotoOrdemServico.create({
@@ -141,6 +149,10 @@ export async function adicionarFotosOS(ordemServicoId: string, formData: FormDat
   }
 
   revalidatePath(`/ordens-servico/${ordemServicoId}`);
+
+  if (rejeitados.length > 0) {
+    throw new Error(`Não foi possível enviar: ${rejeitados.join(", ")}`);
+  }
 }
 
 export async function removerFotoOS(ordemServicoId: string, fotoId: string) {

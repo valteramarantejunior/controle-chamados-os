@@ -25,8 +25,12 @@ export function FotoUploadButtons({
     }
     try {
       await onUpload(formData);
-    } catch {
-      setErro("Não foi possível enviar a foto. Tente novamente.");
+    } catch (err) {
+      setErro(
+        err instanceof Error && err.message
+          ? err.message
+          : "Não foi possível enviar a foto. Tente novamente."
+      );
     } finally {
       setEnviando(false);
       e.target.value = "";
