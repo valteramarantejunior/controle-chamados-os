@@ -1,19 +1,29 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
-import { card } from "@/lib/ui";
+import { card, input } from "@/lib/ui";
 import { formatCurrency } from "@/lib/labels";
 
-export default async function RelatoriosPage() {
+export default async function RelatoriosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clienteId?: string }>;
+}) {
   await requireRole("ADMIN", "ATENDENTE");
+  const { clienteId } = await searchParams;
 
-  const [chamadosPorAtendente, osPorTecnico, valorTotalOS] =
+  const [clientes, chamadosPorAtendente, osPorTecnico, valorTotalOS] =
     await Promise.all([
+      prisma.cliente.findMany({ orderBy: { nome: "asc" } }),
       prisma.user.findMany({
         where: { papel: { in: ["ADMIN", "ATENDENTE"] } },
         select: {
           id: true,
           nome: true,
-          _count: { select: { chamadosAtendidos: true } },
+          _count: {
+            select: {
+              chamadosAtendidos: clienteId ? { where: { clienteId } } : true,
+            },
+          },
         },
         orderBy: { nome: "asc" },
       }),
@@ -22,27 +32,61 @@ export default async function RelatoriosPage() {
         select: {
           id: true,
           nome: true,
-          _count: { select: { ordensServico: true } },
+          _count: {
+            select: {
+              ordensServico: clienteId ? { where: { clienteId } } : true,
+            },
+          },
         },
         orderBy: { nome: "asc" },
       }),
       prisma.ordemServico.aggregate({
         _sum: { valor: true },
-        where: { status: "CONCLUIDA" },
+        where: { status: "CONCLUIDA", clienteId },
       }),
     ]);
+
+  const csvHref = clienteId
+    ? `/api/relatorios/chamados.csv?clienteId=${clienteId}`
+    : "/api/relatorios/chamados.csv";
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-slate-900">Relatórios</h1>
         <a
-          href="/api/relatorios/chamados.csv"
+          href={csvHref}
           className="text-sm text-slate-600 hover:underline"
         >
           Exportar chamados (CSV)
         </a>
       </div>
+
+      <form className="flex gap-3 mb-6">
+        <select
+          name="clienteId"
+          defaultValue={clienteId ?? ""}
+          className={`${input} max-w-xs`}
+        >
+          <option value="">Todos os clientes</option>
+          {clientes.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}
+            </option>
+          ))}
+        </select>
+        <button type="submit" className="text-sm text-slate-600 hover:underline">
+          Filtrar
+        </button>
+        {clienteId && (
+          <a
+            href="/relatorios"
+            className="text-sm text-slate-400 hover:underline"
+          >
+            Limpar filtro
+          </a>
+        )}
+      </form>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className={card}>
