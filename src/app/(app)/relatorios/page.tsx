@@ -46,19 +46,20 @@ export default async function RelatoriosPage({
       }),
     ]);
 
-  const csvHref = clienteId
-    ? `/api/relatorios/chamados.csv?clienteId=${clienteId}`
-    : "/api/relatorios/chamados.csv";
+  const pdfHref = clienteId
+    ? `/api/relatorios/chamados.pdf?clienteId=${clienteId}`
+    : "/api/relatorios/chamados.pdf";
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-slate-900">Relatórios</h1>
         <a
-          href={csvHref}
+          href={pdfHref}
+          target="_blank"
           className="text-sm text-slate-600 hover:underline"
         >
-          Exportar chamados (CSV)
+          Exportar chamados (PDF)
         </a>
       </div>
 
